@@ -179,13 +179,39 @@ class ImportsController < ApplicationController
       redirect_back_or_to redirect_target, alert: t("accounts.not_authorized")
     end
 
+    # Fork: statements are parsed in-process (StatementParser). The upstream AI
+    # path is used only for unrecognised PDFs, and only when PDF_IMPORT_AI is on.
     def create_pdf_import(file)
       return redirect_to new_import_path, alert: t("accounts.not_authorized") unless AccountStatement.statement_manager?(Current.user)
       return redirect_to new_import_path, alert: t("imports.create.pdf_too_large", max_size: Import::MAX_PDF_SIZE / 1.megabyte) if file.size > Import::MAX_PDF_SIZE
 
-      pdf_import = PdfImport.create_from_upload!(family: Current.family, file: file, user: Current.user)
-      pdf_import.process_with_ai_later
-      redirect_to import_path(pdf_import), notice: t("imports.create.pdf_processing")
+      prepared_upload = AccountStatement.prepare_upload!(file)
+      outcome =
+        begin
+          StatementParser.parse(prepared_upload.content)
+        rescue StatementParser::PasswordRequired
+          :password_required
+        rescue StatementParser::Unsupported, StatementParser::Unreadable, StatementParser::WrongPassword
+          :unsupported
+        end
+
+      if outcome == :unsupported && !PdfImport.ai_processing_enabled?
+        return redirect_to new_import_path, alert: t("imports.create.pdf_unsupported")
+      end
+
+      pdf_import = PdfImport.create_from_prepared_upload!(family: Current.family, prepared_upload: prepared_upload, user: Current.user)
+
+      case outcome
+      when StatementParser::Result
+        pdf_import.apply_parse_result!(outcome) unless pdf_import.parsed?
+        redirect_to import_path(pdf_import), notice: t("imports.create.pdf_parsed")
+      when :password_required
+        pdf_import.mark_password_required! unless pdf_import.parsed?
+        redirect_to import_path(pdf_import)
+      else
+        pdf_import.process_with_ai_later
+        redirect_to import_path(pdf_import), notice: t("imports.create.pdf_processing")
+      end
     rescue AccountStatement::DuplicateUploadError
       redirect_to new_import_path, alert: t("imports.create.duplicate_pdf_unavailable")
     rescue AccountStatement::InvalidUploadError
@@ -193,6 +219,13 @@ class ImportsController < ApplicationController
     end
 
     def create_document_import(file)
+      # Fork: a PDF never depends on (or reaches) the vector store.
+      if File.extname(file.original_filename.to_s).downcase == ".pdf"
+        return redirect_to new_import_path, alert: t("imports.create.invalid_pdf") unless valid_pdf_file?(file)
+
+        return create_pdf_import(file)
+      end
+
       adapter = VectorStore.adapter
       unless adapter
         redirect_to new_import_path, alert: t("imports.create.document_provider_not_configured")
@@ -213,16 +246,6 @@ class ImportsController < ApplicationController
         return
       end
 
-      if ext == ".pdf"
-        unless valid_pdf_file?(file)
-          redirect_to new_import_path, alert: t("imports.create.invalid_pdf")
-          return
-        end
-
-        create_pdf_import(file)
-        return
-      end
-
       family_document = Current.family.upload_document(
         file_content: file.read,
         filename: filename
@@ -237,9 +260,8 @@ class ImportsController < ApplicationController
 
     def document_upload_supported_extensions
       adapter = VectorStore.adapter
-      return [] unless adapter
-
-      adapter.supported_extensions.map(&:downcase).uniq.sort
+      extensions = adapter ? adapter.supported_extensions.map(&:downcase) : []
+      (extensions | [ ".pdf" ]).uniq.sort
     end
 
     def document_upload_request?

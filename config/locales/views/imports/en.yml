@@ -440,6 +440,8 @@ en:
       ndjson_uploaded: NDJSON file uploaded successfully.
       pdf_too_large: PDF file is too large. Maximum size is %{max_size}MB.
       pdf_processing: Your PDF is being processed. You will receive an email when analysis is complete.
+      pdf_parsed: Statement read. Review the transactions before importing.
+      pdf_unsupported: "Unsupported statement format. Supported: Maybank savings/current/MAE, Maybank credit card and Touch 'n Go e-statements."
       invalid_pdf: The uploaded file is not a valid PDF.
       duplicate_pdf_unavailable: This PDF is already stored as a statement you cannot access.
       document_too_large: Document file is too large. Maximum size is %{max_size}MB.

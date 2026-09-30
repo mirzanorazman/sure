@@ -127,6 +127,7 @@ class ImportsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "uploads pdf document as PdfImport when using DocumentImport option" do
+    PdfImport.stubs(:ai_processing_enabled?).returns(true)
     adapter = mock("vector_store_adapter")
     adapter.stubs(:supported_extensions).returns(%w[.pdf .txt])
     VectorStore::Registry.stubs(:adapter).returns(adapter)
@@ -153,6 +154,7 @@ class ImportsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "uploads pdf import through account statement" do
+    PdfImport.stubs(:ai_processing_enabled?).returns(true)
     assert_difference "AccountStatement.count", 1 do
       assert_difference "Import.where(type: 'PdfImport').count", 1 do
         post imports_url, params: {
@@ -189,6 +191,7 @@ class ImportsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "duplicate pdf import reuses account statement" do
+    PdfImport.stubs(:ai_processing_enabled?).returns(true)
     statement = AccountStatement.create_from_upload!(
       family: @user.family,
       account: nil,
@@ -215,6 +218,7 @@ class ImportsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "duplicate pdf import does not enqueue processing twice for reused import" do
+    PdfImport.stubs(:ai_processing_enabled?).returns(true)
     assert_difference "AccountStatement.count", 1 do
       assert_difference "Import.where(type: 'PdfImport').count", 1 do
         assert_enqueued_jobs 1, only: ProcessPdfJob do
@@ -239,6 +243,7 @@ class ImportsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "duplicate pdf import for inaccessible statement does not create import" do
+    PdfImport.stubs(:ai_processing_enabled?).returns(true)
     AccountStatement.create_from_upload!(
       family: @user.family,
       account: accounts(:investment),
@@ -264,6 +269,7 @@ class ImportsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "read only shared user cannot reuse duplicate statement backed pdf import" do
+    PdfImport.stubs(:ai_processing_enabled?).returns(true)
     AccountStatement.create_from_upload!(
       family: @user.family,
       account: accounts(:credit_card),
@@ -451,4 +457,72 @@ class ImportsControllerTest < ActionDispatch::IntegrationTest
     assert_select 'select[name="import[account_id]"] option', text: "IOU (personal debt to friend)", count: 0
     assert_select 'select[name="import[account_id]"] option', text: "Plaid Depository Account", count: 0
   end
+
+  test "a supported statement is parsed in the request and never reaches AI or the vector store" do
+    StatementParser.stubs(:parse).returns(parsed_statement_result)
+    ProcessPdfJob.expects(:perform_later).never
+    Family.any_instance.expects(:upload_document).never
+
+    assert_difference "PdfImport.count", 1 do
+      post imports_url, params: { import: { import_file: file_fixture_upload("imports/sample_bank_statement.pdf", "application/pdf") } }
+    end
+
+    created = PdfImport.order(:created_at).last
+    assert created.parsed?
+    assert_nil created.ai_summary
+    assert_redirected_to import_url(created)
+    assert_equal I18n.t("imports.create.pdf_parsed"), flash[:notice]
+  end
+
+  test "an unsupported statement is rejected without saving anything when AI is off" do
+    PdfImport.stubs(:ai_processing_enabled?).returns(false)
+    ProcessPdfJob.expects(:perform_later).never
+
+    assert_no_difference [ "Import.count", "AccountStatement.count" ] do
+      post imports_url, params: { import: { import_file: file_fixture_upload("imports/sample_bank_statement.pdf", "application/pdf") } }
+    end
+
+    assert_redirected_to new_import_url
+    assert_equal I18n.t("imports.create.pdf_unsupported"), flash[:alert]
+  end
+
+  test "a protected statement is stored and asks for its password" do
+    assert_difference "PdfImport.count", 1 do
+      post imports_url, params: { import: { import_file: file_fixture_upload("imports/sample_bank_statement_encrypted.pdf", "application/pdf") } }
+    end
+
+    created = PdfImport.order(:created_at).last
+    assert created.password_required?
+    assert_redirected_to import_url(created)
+  end
+
+  test "the PDF option is offered with no vector store configured" do
+    VectorStore::Registry.stubs(:adapter).returns(nil)
+
+    get new_import_url
+
+    assert_response :success
+    assert_select "input[type=file][accept*='.pdf']"
+  end
+
+  test "a PDF sent through the document option with no vector store is still parsed" do
+    VectorStore::Registry.stubs(:adapter).returns(nil)
+    StatementParser.stubs(:parse).returns(parsed_statement_result)
+
+    assert_difference "PdfImport.count", 1 do
+      post imports_url, params: { import: { type: "DocumentImport", import_file: file_fixture_upload("imports/sample_bank_statement.pdf", "application/pdf") } }
+    end
+  end
+
+  private
+    def parsed_statement_result
+      StatementParser::Result.new(
+        parser_key: "maybank_casa", document_type: "bank_statement", institution_name: "Maybank",
+        account_last4: "9012", currency: "MYR", liability: false,
+        period_start_on: Date.new(2025, 1, 1), period_end_on: Date.new(2025, 1, 31),
+        opening_balance: BigDecimal("1000"), closing_balance: BigDecimal("850"),
+        printed_total_credit: nil, printed_total_debit: BigDecimal("150"),
+        transactions: [ StatementParser::Transaction.new(date: Date.new(2025, 1, 2), amount: BigDecimal("-150"), name: "FPX PAYMENT SHOPEE", notes: nil) ]
+      )
+    end
 end
