@@ -1,0 +1,30 @@
+<%# locals: (import:) %>
+<% statement = import.account_statement %>
+<% ledger_checks = statement&.account.present? ? statement.reconciliation_checks : [] %>
+
+<% if import.statement_checks_mismatched? %>
+  <div class="text-sm px-3 py-2 bg-warning/10 rounded-lg space-y-1" data-testid="pdf-statement-checks-warning">
+    <p class="font-medium text-primary"><%= t("imports.pdf_statement_checks.mismatch_title") %></p>
+    <% import.statement_checks.reject { _1["matched"] }.each do |check| %>
+      <p class="text-secondary">
+        <%= t("imports.pdf_statement_checks.keys.#{check['key']}") %>:
+        <%= t("imports.pdf_statement_checks.printed_vs_parsed", printed: check["printed"], parsed: check["parsed"]) %>
+      </p>
+    <% end %>
+  </div>
+<% end %>
+
+<% if ledger_checks.any? %>
+  <div class="space-y-2">
+    <h2 class="font-medium text-primary"><%= t("imports.pdf_statement_checks.ledger_title") %></h2>
+    <% ledger_checks.each do |check| %>
+      <p class="text-sm text-secondary px-3 py-2 bg-container-inset rounded-lg">
+        <%= t("imports.pdf_statement_checks.keys.#{check[:key]}") %>:
+        <%= t("imports.pdf_statement_checks.statement_vs_ledger",
+              statement: check[:statement_amount].to_s("F"),
+              ledger: check[:ledger_amount].to_s("F"),
+              difference: check[:difference].to_s("F")) %>
+      </p>
+    <% end %>
+  </div>
+<% end %>

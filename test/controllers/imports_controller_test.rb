@@ -514,6 +514,44 @@ class ImportsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "a password-required import shows the password form" do
+    import = PdfImport.create_from_prepared_upload!(
+      family: @user.family,
+      prepared_upload: AccountStatement.prepare_upload!(
+        uploaded_file(filename: "locked.pdf", content_type: "application/pdf",
+                      content: file_fixture("imports/sample_bank_statement_encrypted.pdf").binread)
+      ),
+      user: @user
+    )
+    import.mark_password_required!
+
+    get import_url(import)
+
+    assert_select "form[action='#{import_pdf_password_path(import)}'] input[type=password][name=password]"
+  end
+
+  test "a parsed import with mismatched totals shows the warning" do
+    StatementParser.stubs(:parse).returns(parsed_statement_result)
+    post imports_url, params: { import: { import_file: file_fixture_upload("imports/sample_bank_statement.pdf", "application/pdf") } }
+    import = PdfImport.order(:created_at).last
+    import.update!(extracted_data: import.extracted_data.merge("checks" => [ { "key" => "total_debit", "printed" => "150.0", "parsed" => "100.0", "matched" => false } ]))
+
+    get import_url(import)
+
+    assert_select "[data-testid='pdf-statement-checks-warning']"
+  end
+
+  test "a completed parsed import shows the complete page, not the unknown state" do
+    StatementParser.stubs(:parse).returns(parsed_statement_result)
+    post imports_url, params: { import: { import_file: file_fixture_upload("imports/sample_bank_statement.pdf", "application/pdf") } }
+    import = PdfImport.order(:created_at).last
+    import.update!(status: :complete)
+
+    get import_url(import)
+
+    assert_select "h1", text: I18n.t("imports.pdf_import.complete_title")
+  end
+
   private
     def parsed_statement_result
       StatementParser::Result.new(

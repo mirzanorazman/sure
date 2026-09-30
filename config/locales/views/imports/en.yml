@@ -243,6 +243,24 @@ en:
         hint_html: Upload the <strong>all.ndjson</strong> file from your data export ZIP
         ndjson_invalid: Must be valid NDJSON with at least one record
   imports:
+    pdf_password:
+      title: This statement is password-protected
+      description: "Enter the password for %{filename}. It is used once to read the statement and is not saved."
+      label: PDF password
+      submit: Unlock and read
+      parsed: Statement read. Review the transactions before importing.
+      wrong_password: That password did not open the statement. Try again.
+    pdf_statement_checks:
+      mismatch_title: The parsed transactions do not add up to the statement's printed figures. Some lines may have been missed — review before importing.
+      printed_vs_parsed: "statement %{printed}, parsed %{parsed}"
+      ledger_title: Statement vs account balance
+      statement_vs_ledger: "statement %{statement}, account %{ledger} (difference %{difference})"
+      keys:
+        total_credit: Total credit
+        total_debit: Total debit
+        closing_balance: Closing balance
+        opening_balance: Opening balance
+        period_movement: Movement in period
     mapping_labels:
       account_type: "Account Type"
       account: "Account"

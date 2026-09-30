@@ -468,6 +468,7 @@ Rails.application.routes.draw do
     end
 
     resource :upload, only: %i[show update], module: :import
+    resource :pdf_password, only: :update, module: :import
     resource :configuration, only: %i[show update], module: :import
     resource :clean, only: :show, module: :import
     resource :confirm, only: :show, module: :import
