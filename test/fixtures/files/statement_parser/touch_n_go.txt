@@ -1,0 +1,6 @@
+   TNG WALLET TRANSACTION HISTORY
+   Date               Status    Transaction Type   Reference            Description   Details              Amount (RM)   Wallet Balance
+   01/02/2025 12:30   Success   Payment            20250201123000123    GRAB FOOD     Merchant payment     -RM25.50      RM74.50
+   03/02/2025 08:15   Success   Reload             20250203081500456    Maybank2u     Reload via FPX       +RM100.00     RM174.50
+   04/02/2025 09:00   Failed    Payment            20250204090000789    PLUS TOLL     Exit Toll: Sg Besi   -RM5.00       RM174.50
+   05/02/2025 18:45   Success   Payment            20250205184500999    PLUS TOLL     Exit Toll: Sg Besi   -RM5.00       RM169.50
