@@ -76,6 +76,27 @@ module PdfImport::StatementParsing
     statement.destroy! if statement && statement.account_id.nil? && statement.pdf_imports.reload.none?
   end
 
+  # Q9/Q18: the parser cannot categorise, so the family's own rules do it --
+  # scoped to what this import created, so publishing never rewrites history.
+  # A failing rule must not fail a publish whose data has already committed.
+  def apply_rules_to_imported_transactions!
+    transaction_ids = Transaction.joins(:entry).where(entries: { import_id: id }).pluck(:id)
+    return if transaction_ids.empty?
+
+    family.rules.where(active: true, resource_type: "transaction").find_each do |rule|
+      rule.apply(transaction_ids: transaction_ids)
+    rescue StandardError => e
+      DebugLogEntry.capture(
+        category: "imports",
+        level: "error",
+        message: "Rule failed after publishing a parsed statement: #{e.class}",
+        source: self.class.name,
+        family: family,
+        metadata: { record_type: self.class.name, record_id: id, rule_id: rule.id, error_class: e.class.name }
+      )
+    end
+  end
+
   private
     def serialize_transaction(txn)
       {

@@ -93,6 +93,46 @@ class PdfImportStatementParsingTest < ActiveSupport::TestCase
     ClimateControl.modify(PDF_IMPORT_AI: "true") { assert PdfImport.ai_processing_enabled? }
   end
 
+  test "publishing a parsed import runs active rules on only its transactions" do
+    account = accounts(:depository)
+    category = @family.categories.create!(name: "Online shopping")
+    Rule.create!(
+      family: @family, resource_type: "transaction", active: true, effective_date: Date.new(2024, 1, 1),
+      conditions: [ Rule::Condition.new(condition_type: "transaction_name", operator: "like", value: "SHOPEE") ],
+      actions: [ Rule::Action.new(action_type: "set_transaction_category", value: category.id) ]
+    )
+    unrelated = account.entries.create!(
+      date: Date.new(2025, 1, 3), amount: 10, name: "SHOPEE old", currency: account.currency,
+      entryable: Transaction.new
+    )
+
+    @import.apply_parse_result!(casa_result)
+    @import.assign_account!(account)
+    @import.reload.publish
+
+    shopee = @import.entries.find_by(name: "FPX PAYMENT SHOPEE")
+    assert_equal "complete", @import.reload.status
+    assert_equal category, shopee.transaction.category
+    assert_nil unrelated.reload.transaction.category
+  end
+
+  test "a failing rule does not fail the publish and is recorded for support" do
+    Rule.create!(
+      family: @family, resource_type: "transaction", active: true, effective_date: Date.new(2024, 1, 1),
+      conditions: [ Rule::Condition.new(condition_type: "transaction_name", operator: "like", value: "SHOPEE") ],
+      actions: [ Rule::Action.new(action_type: "set_transaction_category", value: @family.categories.create!(name: "Shops").id) ]
+    )
+    Rule.any_instance.stubs(:apply).raises(StandardError, "boom")
+
+    @import.apply_parse_result!(casa_result)
+    @import.assign_account!(accounts(:depository))
+
+    assert_difference "DebugLogEntry.count", 1 do
+      @import.reload.publish
+    end
+    assert_equal "complete", @import.reload.status
+  end
+
   private
     def prepared_upload
       AccountStatement.prepare_upload!(

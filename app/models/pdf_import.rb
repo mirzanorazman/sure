@@ -156,6 +156,8 @@ class PdfImport < Import
       Transaction.import!(new_transactions, recursive: true) if new_transactions.any?
       reconcile_entries!(reconciled_now, at: reconciled_at)
     end
+
+    apply_rules_to_imported_transactions! if parsed?
   end
 
   # Re-targeting is destructive: it releases the statement's evidence on the

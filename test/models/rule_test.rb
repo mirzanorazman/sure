@@ -348,4 +348,22 @@ class RuleTest < ActiveSupport::TestCase
     assert_nil transaction_entry2.transaction.category,
       "Transaction on other account should not be categorized"
   end
+
+  test "apply can be limited to specific transactions" do
+    inside = create_transaction(date: Date.current, account: @account, merchant: @whole_foods_merchant)
+    outside = create_transaction(date: Date.current, account: @account, merchant: @whole_foods_merchant)
+
+    rule = Rule.create!(
+      family: @family,
+      resource_type: "transaction",
+      effective_date: 1.day.ago.to_date,
+      conditions: [ Rule::Condition.new(condition_type: "transaction_merchant", operator: "=", value: @whole_foods_merchant.id) ],
+      actions: [ Rule::Action.new(action_type: "set_transaction_category", value: @groceries_category.id) ]
+    )
+
+    rule.apply(transaction_ids: [ inside.transaction.id ])
+
+    assert_equal @groceries_category, inside.reload.transaction.category
+    assert_nil outside.reload.transaction.category
+  end
 end
