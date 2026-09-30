@@ -4,14 +4,18 @@ class Import::PdfPasswordsController < ApplicationController
   before_action :set_import
 
   def update
+    return redirect_to import_path(@import) unless @import.password_required?
+
     case @import.parse_statement!(password: params[:password].to_s)
     when :parsed
       redirect_to import_path(@import), notice: t("imports.pdf_password.parsed")
     when :wrong_password, :password_required
       redirect_to import_path(@import), alert: t("imports.pdf_password.wrong_password")
-    else
+    when :unsupported
       @import.discard_unparsed!
       redirect_to new_import_path, alert: t("imports.create.pdf_unsupported")
+    else
+      redirect_to import_path(@import)
     end
   end
 

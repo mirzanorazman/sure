@@ -254,6 +254,7 @@ en:
       mismatch_title: The parsed transactions do not add up to the statement's printed figures. Some lines may have been missed — review before importing.
       printed_vs_parsed: "statement %{printed}, parsed %{parsed}"
       ledger_title: Statement vs account balance
+      no_transactions: No transactions could be read from this statement. If it should have some, its layout may have changed — check it before relying on this import.
       statement_vs_ledger: "statement %{statement}, account %{ledger} (difference %{difference})"
       keys:
         total_credit: Total credit

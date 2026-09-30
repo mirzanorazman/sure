@@ -171,6 +171,10 @@
           </p>
         </div>
 
+        <% if import.parsed? %>
+          <%= render "imports/pdf_statement_checks", import: import %>
+        <% end %>
+
         <% if import.ai_processed? %>
           <div class="space-y-2">
             <h2 class="font-medium text-primary"><%= t("imports.pdf_import.summary_label") %></h2>

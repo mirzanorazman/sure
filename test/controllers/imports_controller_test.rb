@@ -552,6 +552,19 @@ class ImportsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: I18n.t("imports.pdf_import.complete_title")
   end
 
+  test "a recognised statement where no rows could be read warns instead of looking complete" do
+    empty = parsed_statement_result.with(transactions: [])
+    StatementParser.stubs(:parse).returns(empty)
+    post imports_url, params: { import: { import_file: file_fixture_upload("imports/sample_bank_statement.pdf", "application/pdf") } }
+    import = PdfImport.order(:created_at).last
+    assert_equal "complete", import.status
+
+    get import_url(import)
+
+    assert_select "[data-testid='pdf-statement-checks-warning']"
+    assert_select "[data-testid='pdf-no-transactions']", text: I18n.t("imports.pdf_statement_checks.no_transactions")
+  end
+
   private
     def parsed_statement_result
       StatementParser::Result.new(

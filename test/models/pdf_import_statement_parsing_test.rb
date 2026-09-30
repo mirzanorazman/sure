@@ -133,6 +133,15 @@ class PdfImportStatementParsingTest < ActiveSupport::TestCase
     assert_equal "complete", @import.reload.status
   end
 
+  test "a parse result is never applied over an import that already has data" do
+    @import.update!(status: :complete, ai_summary: "AI already processed this")
+
+    assert_not @import.apply_parse_result!(casa_result)
+    assert_equal "complete", @import.reload.status
+    assert_equal 0, @import.rows.count
+    assert_not @import.parsed?
+  end
+
   private
     def prepared_upload
       AccountStatement.prepare_upload!(

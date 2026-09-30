@@ -25,6 +25,12 @@ module PdfImport::StatementParsing
     ai_processed? || parsed?
   end
 
+  # Only a fresh upload -- nothing extracted, nothing published -- may take a
+  # parse result, be marked as waiting for a password, or be discarded.
+  def awaiting_parse?
+    pending? && !processed? && !data_committed?
+  end
+
   def statement_checks
     parsed? ? Array(extracted_data["checks"]) : []
   end
@@ -36,9 +42,10 @@ module PdfImport::StatementParsing
   # The password is used for this call only and never stored.
   def parse_statement!(password: nil)
     return :parsed if parsed?
+    return :not_awaiting unless awaiting_parse?
 
-    apply_parse_result!(StatementParser.parse(pdf_file_content, password: password))
-    :parsed
+    applied = apply_parse_result!(StatementParser.parse(pdf_file_content, password: password))
+    applied || parsed? ? :parsed : :not_awaiting
   rescue StatementParser::WrongPassword
     :wrong_password
   rescue StatementParser::PasswordRequired
@@ -47,8 +54,12 @@ module PdfImport::StatementParsing
     :unsupported
   end
 
+  # Returns false, changing nothing, unless the import is awaiting a parse. The
+  # row lock also serialises a double-submitted password form.
   def apply_parse_result!(result)
-    transaction do
+    with_lock do
+      next false unless awaiting_parse?
+
       update!(
         document_type: result.document_type,
         extracted_data: {
@@ -61,16 +72,21 @@ module PdfImport::StatementParsing
       generate_rows_from_extracted_data
       sync_mappings
       update!(status: rows_count.positive? ? :pending : :complete)
+      true
     end
   end
 
   def mark_password_required!
+    return false unless awaiting_parse?
+
     update!(status: :pending, extracted_data: { "parse_status" => "password_required" })
   end
 
   # For an upload that turned out not to be a supported statement once
   # decrypted: nothing was extracted, so nothing is worth keeping.
   def discard_unparsed!
+    return false unless awaiting_parse?
+
     statement = account_statement
     destroy!
     statement.destroy! if statement && statement.account_id.nil? && statement.pdf_imports.reload.none?

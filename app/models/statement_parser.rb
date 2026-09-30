@@ -20,5 +20,19 @@ module StatementParser
     raise Unsupported unless parser
 
     parser.new(lines).parse
+  rescue Error
+    raise
+  rescue StandardError => e
+    # pdf-reader raises assorted errors on odd PDFs, and a misprinted date can
+    # fail Date parsing. Report them as unreadable with no cause: the original
+    # message could quote statement content.
+    DebugLogEntry.capture(
+      category: "import",
+      level: "warn",
+      message: "Statement could not be read: #{e.class}",
+      source: name,
+      metadata: { error_class: e.class.name }
+    )
+    raise Unreadable, cause: nil
   end
 end

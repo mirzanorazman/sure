@@ -46,4 +46,15 @@ class Import::PdfPasswordsControllerTest < ActionDispatch::IntegrationTest
     filter = ActiveSupport::ParameterFilter.new(Rails.application.config.filter_parameters)
     assert_equal "[FILTERED]", filter.filter("password" => "test1234")["password"]
   end
+
+  test "a password sent for an import that is not waiting for one changes nothing" do
+    published = imports(:pdf_processed)
+
+    assert_no_difference "PdfImport.count" do
+      patch import_pdf_password_url(published), params: { password: "test1234" }
+    end
+
+    assert_redirected_to import_url(published)
+    assert_equal "complete", published.reload.status
+  end
 end

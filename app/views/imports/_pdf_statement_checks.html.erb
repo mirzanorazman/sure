@@ -2,6 +2,10 @@
 <% statement = import.account_statement %>
 <% ledger_checks = statement&.account.present? ? statement.reconciliation_checks : [] %>
 
+<% if import.parsed? && import.extracted_count.zero? %>
+  <p class="text-sm text-primary px-3 py-2 bg-warning/10 rounded-lg" data-testid="pdf-no-transactions"><%= t("imports.pdf_statement_checks.no_transactions") %></p>
+<% end %>
+
 <% if import.statement_checks_mismatched? %>
   <div class="text-sm px-3 py-2 bg-warning/10 rounded-lg space-y-1" data-testid="pdf-statement-checks-warning">
     <p class="font-medium text-primary"><%= t("imports.pdf_statement_checks.mismatch_title") %></p>

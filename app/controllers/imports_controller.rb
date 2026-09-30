@@ -203,10 +203,10 @@ class ImportsController < ApplicationController
 
       case outcome
       when StatementParser::Result
-        pdf_import.apply_parse_result!(outcome) unless pdf_import.parsed?
+        pdf_import.apply_parse_result!(outcome)
         redirect_to import_path(pdf_import), notice: t("imports.create.pdf_parsed")
       when :password_required
-        pdf_import.mark_password_required! unless pdf_import.parsed?
+        pdf_import.mark_password_required!
         redirect_to import_path(pdf_import)
       else
         pdf_import.process_with_ai_later
