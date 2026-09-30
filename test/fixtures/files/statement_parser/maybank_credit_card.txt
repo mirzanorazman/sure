@@ -1,0 +1,32 @@
+                                   STATEMENT OF CREDIT CARD ACCOUNT
+                                   PENYATA AKAUN KAD KREDIT
+                                                                                                      Malayan Banking Berhad (3813-K)
+                                                                                     Page/Halaman               001 OF 002
+ALI BIN ABU
+1, JALAN CONTOH                                                                Tarikh Penyata/     Tarikh Akhir Pembayaran
+43000 KAJANG                                                                          28 JAN 25               17 FEB 25
+  Account Number/Nombor Akaun      Current Balance/Baki Semasa  Minimum Payment/Bayaran Minima  Amount To Be Paid/Amaun dibayar
+      5400 1234 5678 4321                           109.30                             50.00
+Posting Date /Transaction Date /                           Transaction Description /                          Amount(RM) /
+  Tarikh Pos   Tarikh Transaksi                               Huraian Transaksi                                Amaun(RM)
+                               ALI BIN ABU
+                               MAYBANK 2 GOLD MASTERCARD      :  5400 1234 5678 4321
+                               YOUR COMBINED CREDIT LIMIT (RM)                      10,000
+                               KOMBINASI HAD KREDIT ANDA (RM)
+                               YOUR PREVIOUS STATEMENT BALANCE                                                    1,200.00
+                               JUMLAH PENYATA TERAKHIR
+    28/12           27/12      FPX-SHOPEE MALAYSIA                                  MY                               85.90
+                                  STATEMENT OF CREDIT CARD ACCOUNT
+                                  PENYATA AKAUN KAD KREDIT
+                                                                                                     Malayan Banking Berhad (3813-K)
+                                                                                    Page/Halaman               002 OF 002
+Posting Date /Transaction Date /                          Transaction Description /                           Amount(RM) /
+  Tarikh Pos   Tarikh Transaksi                              Huraian Transaksi                                 Amaun(RM)
+                               2512280000000001
+    02/01           02/01      PAYMENT VIA MAYBANK2U                                                           1,200.00CR
+    15/01           14/01      GRAB* A-1234        AP                               PETALING JAYA MY                 23.40
+                               TOTAL CREDIT THIS MONTH                              1,200.00
+                               (JUMLAH KREDIT)
+                               TOTAL DEBIT THIS MONTH                               109.30
+                               (JUMLAH DEBIT)
+                                                                                       SUB TOTAL/JUMLAH            109.30
