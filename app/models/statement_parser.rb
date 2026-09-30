@@ -7,4 +7,18 @@ module StatementParser
   class WrongPassword < Error; end
   class Unsupported < Error; end
   class Unreadable < Error; end
+
+  # Most specific fingerprint first: a card statement also carries Maybank's
+  # bank header, so it must be tried before CASA.
+  def self.parsers
+    [ MaybankCreditCard, MaybankCasa, TouchNGo ]
+  end
+
+  def self.parse(content, password: nil)
+    lines = TextExtractor.lines(content, password: password)
+    parser = parsers.find { |klass| klass.matches?(lines) }
+    raise Unsupported unless parser
+
+    parser.new(lines).parse
+  end
 end
