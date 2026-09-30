@@ -1,0 +1,39 @@
+                                               Maybank Islamic Berhad (000000-X)
+000001       SAMPLE BRANCH                                                MUKA/頁 /PAGE :                          1
+                                                                          TARIKH PENYATA
+                                                                                      :
+             ALI BIN ABU                                    結單日期                           31/01/25
+             1, JALAN CONTOH                                              STATEMENT DATE
+             TAMAN CONTOH                                                 NOMBOR AKAUN
+             43000 KAJANG                                                    戶號       :
+             SELANGOR                                                       ACCOUNT                123456-789012
+                                                                            NUMBER
+PROTECTED BY PIDM UP TO RM250,000 FOR EACH DEPOSITOR                                             PERSONAL SAVER-i
+                             URUSNIAGA AKAUN/       戶口進支項       /ACCOUNT TRANSACTIONS
+  TARIKH MASUK                       BUTIR URUSNIAGA                        JUMLAH URUSNIAGA        BAKI PENYATA
+   ENTRY DATE                     TRANSACTION DESCRIPTION                  TRANSACTION AMOUNT    STATEMENT BALANCE
+                BEGINNING BALANCE                                                                         1,000.00
+     02/01/25   FPX PAYMENT FR A/C                                                   150.00-                850.00
+                 SHOPEE MALAYSIA
+                 *
+     15/01/25   TRANSFER TO A/C                                                    2,500.00+              3,350.00
+                 ACME SDN BHD
+Perhation / Note
+(1)All items and balances shown will be considered correct unless the Bank is notified in writing of any discrepancies within 21 days.
+   Please notify us of any change of address in writing.
+                                               Maybank Islamic Berhad (000000-X)
+000002       SAMPLE BRANCH                                                MUKA/頁 /PAGE :                          2
+             ALI BIN ABU                                    結單日期                           31/01/25
+              1, JALAN CONTOH                                             STATEMENT DATE
+                                                                            ACCOUNT                123456-789012
+                                                                            NUMBER
+  TARIKH MASUK                       BUTIR URUSNIAGA                        JUMLAH URUSNIAGA        BAKI PENYATA
+   ENTRY DATE                     TRANSACTION DESCRIPTION                  TRANSACTION AMOUNT    STATEMENT BALANCE
+                 SALARY JAN
+     28/01/25   DEBIT CARD PURCHASE                                                     .50-              3,349.50
+                 PARKING SELANGOR
+                 ENDING BALANCE :                                                          3,349.50
+                 TOTAL CREDIT :                                                            2,500.00
+                 TOTAL DEBIT :                                                               150.50
+Perhation / Note
+   Please notify us of any change of address in writing.
