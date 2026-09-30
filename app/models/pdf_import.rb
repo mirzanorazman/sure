@@ -1,4 +1,6 @@
 class PdfImport < Import
+  include PdfImport::StatementParsing
+
   has_one_attached :pdf_file, dependent: :purge_later
 
   validates :document_type, inclusion: { in: DOCUMENT_TYPES }, allow_nil: true
@@ -61,10 +63,14 @@ class PdfImport < Import
     end
 
     def create_from_upload!(family:, file:, user:)
+      create_from_prepared_upload!(family: family, prepared_upload: AccountStatement.prepare_upload!(file), user: user)
+    end
+
+    def create_from_prepared_upload!(family:, prepared_upload:, user:)
       statement = AccountStatement.create_from_prepared_upload!(
         family: family,
         account: nil,
-        prepared_upload: AccountStatement.prepare_upload!(file)
+        prepared_upload: prepared_upload
       )
 
       create_from_statement!(statement: statement)
@@ -396,7 +402,7 @@ class PdfImport < Import
   end
 
   def configured?
-    ai_processed? && rows_count > 0
+    processed? && rows_count > 0
   end
 
   def cleaned?
